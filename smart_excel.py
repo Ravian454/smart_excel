@@ -20,11 +20,25 @@ if "feature" not in st.session_state:
 if st.session_state.feature == "update_rate":
     # Percentage update feature content
     file3 = st.file_uploader("Upload Excel file to update Rate")
-    percentage = st.number_input("Enter percentage (%)", min_value=0, max_value=100)
-    if st.button("Update Rate"):
-        # Update Rate logic
-        if file3:
-            df3 = pd.read_excel(file3)
+    if file3:
+        excel_file = pd.ExcelFile(file3)
+        sheet_names = excel_file.sheet_names
+        
+        # Display sheet names for selection
+        selected_sheet = st.selectbox("Select Sheet Number", 
+                                      options=range(1, len(sheet_names) + 1), 
+                                      format_func=lambda x: sheet_names[x-1])
+        
+        # Read selected sheet
+        df3 = excel_file.parse(sheet_names[selected_sheet - 1], header=0)
+        
+        # Display column names
+        st.write("Columns in the uploaded file:")
+        st.write(df3.columns)
+        
+        percentage = st.number_input("Enter percentage (%)", min_value=0, max_value=100)
+        if st.button("Update Rate"):
+            # Update Rate logic
             df3['Rate'] = df3['Rate'] + (df3['Rate'] * (percentage / 100))
             buffer = BytesIO()
             df3.to_excel(buffer, index=False)
@@ -35,8 +49,8 @@ if st.session_state.feature == "update_rate":
                 file_name="updated_file.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
-        else:
-            st.error("Please upload an Excel file")
+    else:
+        st.error("Please upload an Excel file")
 elif st.session_state.feature == "excel_matcher":
 
     # File uploaders
